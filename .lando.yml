@@ -1,0 +1,44 @@
+name: up2u
+recipe: laravel
+config:
+  webroot: public
+  xdebug: false
+services:
+  appserver:
+    type: php:8.0
+    extras:
+      - "wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh"
+    build:
+      - composer install
+  node:
+    type: node
+    globals:
+      gulp-cli: "latest"
+      bower: "latest"
+      webpack: "latest"
+      npm: "latest"
+      ruby: "latest"
+      sass: "latest"
+  mailhog:
+    type: mailhog:v1.0.0
+    portforward: false
+    hogfrom:
+      - appserver
+  adminer:
+    type: compose
+    services:
+      image: dehy/adminer
+      command: /bin/s6-svscan /etc/services.d
+    portforward: true
+  chromedriver:
+    type: compose
+    services:
+      image: robcherry/docker-chromedriver:latest
+      expose:
+        - "4444"
+      environment:
+        CHROMEDRIVER_WHITELISTED_IPS: ""
+        CHROMEDRIVER_URL_BASE: "/wd/hub"
+      security_opt:
+        - seccomp:unconfined
+      command: ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
